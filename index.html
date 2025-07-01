@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shard Tree</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        #shard-input, #quantity-input, #search-button, #toggle-all-button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: #e0e0e0;
+        }
+
+        #shard-input {
+            flex: 1;
+        }
+
+        #quantity-input {
+            width: 100px;
+        }
+
+        #search-button, #toggle-all-button {
+            cursor: pointer;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            border: 1px solid #555;
+            background-color: #222;
+            z-index: 99;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            display: none;
+        }
+
+        .autocomplete-items.visible {
+            display: block;
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .autocomplete-items div:hover {
+            background-color: #444;
+        }
+
+        #output {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        details {
+            position: relative;
+        }
+
+        details summary {
+            cursor: pointer;
+            padding-left: 0;
+            position: relative;
+            list-style: none;
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details[open] > summary::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 100%;
+            height: calc(100% - 20px);
+            width: 2px;
+            background-color: #777;
+        }
+
+        details > div {
+            position: relative;
+            margin-left: 15px;
+        }
+
+        details[open] > div::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #555;
+        }
+
+        details > div:not(:has(details))::before {
+            height: 20px;
+        }
+
+        span[title] {
+            cursor: help;
+            text-decoration: underline dotted;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Skyblock Shard DB</h1>
+    <div class="input-group">
+        <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
+        <div id="autocomplete-list" class="autocomplete-items"></div>
+        <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
+        <button id="search-button">Search</button>
+        <button id="toggle-all-button">Collapse All</button>
+    </div>
+    <div id="output">Enter a shard and quantity to see the fusion tree.</div>
+</div>
+
+<script type="module">
+    import { getRecipeTree } from './src/main.ts';
+
+    const shardInput = document.getElementById('shard-input');
+    const autocompleteList = document.getElementById('autocomplete-list');
+    const quantityInput = document.getElementById('quantity-input');
+    const searchButton = document.getElementById('search-button');
+    const toggleAllButton = document.getElementById('toggle-all-button');
+    const output = document.getElementById('output');
+
+    let shards = [];
+    let shardNameToKey = {};
+    let allExpanded = true;
+
+    async function loadShards() {
+        const response = await fetch('fusion-data.json');
+        const data = await response.json();
+        shards = Object.entries(data.shards).map(([key, shard]) => ({ key, ...shard }));
+        shardNameToKey = shards.reduce((acc, shard) => {
+            acc[shard.name.toLowerCase()] = shard.key;
+            return acc;
+        }, {});
+    }
+
+    loadShards();
+
+    shardInput.addEventListener('input', function() {
+        const val = this.value.toLowerCase();
+        closeAllLists();
+        if (!val) {
+            autocompleteList.classList.remove('visible');
+            return;
+        }
+        const matches = shards.filter(shard => shard.name.toLowerCase().includes(val));
+        if (matches.length > 0) {
+            autocompleteList.classList.add('visible');
+            matches.forEach(shard => {
+                const item = document.createElement('div');
+                item.textContent = shard.name;
+                item.addEventListener('click', function() {
+                    shardInput.value = shard.name;
+                    closeAllLists();
+                    autocompleteList.classList.remove('visible');
+                });
+                autocompleteList.appendChild(item);
+            });
+        } else {
+            autocompleteList.classList.remove('visible');
+        }
+    });
+
+    function closeAllLists() {
+        while (autocompleteList.firstChild) {
+            autocompleteList.removeChild(autocompleteList.firstChild);
+        }
+    }
+
+    searchButton.addEventListener('click', async () => {
+        const shardName = shardInput.value.toLowerCase();
+        const quantity = parseInt(quantityInput.value) || 1;
+        const shardKey = shardNameToKey[shardName];
+        if (shardKey) {
+            output.innerHTML = 'Loading...';
+            const html = await getRecipeTree(shardKey, quantity);
+            output.innerHTML = html;
+            toggleAllButton.textContent = 'Collapse All';
+            allExpanded = true;
+            saveDetailsState();
+        } else {
+            output.innerHTML = 'Shard not found.';
+        }
+    });
+
+    let detailsStates = new Map();
+
+    function saveDetailsState() {
+        const details = output.querySelectorAll('details');
+        detailsStates.clear();
+        details.forEach((detail, index) => {
+            detailsStates.set(index, detail.open);
+        });
+    }
+
+    function restoreDetailsState() {
+        const details = output.querySelectorAll('details');
+        details.forEach((detail, index) => {
+            if (detailsStates.has(index)) {
+                detail.open = detailsStates.get(index);
+            }
+        });
+    }
+
+    toggleAllButton.addEventListener('click', () => {
+        const details = output.querySelectorAll('details');
+        if (allExpanded) {
+            details.forEach(detail => detail.open = false);
+            toggleAllButton.textContent = 'Expand All';
+            allExpanded = false;
+        } else {
+            details.forEach(detail => detail.open = true);
+            restoreDetailsState();
+            toggleAllButton.textContent = 'Collapse All';
+            allExpanded = true;
+        }
+    });
+
+    output.addEventListener('toggle', (event) => {
+        if (event.target.tagName === 'DETAILS') {
+            saveDetailsState();
+        }
+    });
+</script>
+</body>
+</html>
