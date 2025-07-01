@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Shard Tree</title>
+    <title>Skyblock Shard DB</title>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -76,7 +76,7 @@
             cursor: pointer;
         }
 
-        .autocomplete-items div:hover {
+        .autocomplete-items div:hover, .autocomplete-items div.highlight {
             background-color: #444;
         }
 
@@ -139,7 +139,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Shard Crafting Tree</h1>
+    <h1>Skyblock Shard DB</h1>
     <div class="input-group">
         <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
         <div id="autocomplete-list" class="autocomplete-items"></div>
@@ -162,6 +162,7 @@
     let shards = [];
     let shardNameToKey = {};
     let allExpanded = true;
+    let currentFocus = -1;
 
     async function loadShards() {
         const response = await fetch('fusion-data.json');
@@ -178,6 +179,7 @@
     shardInput.addEventListener('input', function() {
         const val = this.value.toLowerCase();
         closeAllLists();
+        currentFocus = -1;
         if (!val) {
             autocompleteList.classList.remove('visible');
             return;
@@ -185,14 +187,16 @@
         const matches = shards.filter(shard => shard.name.toLowerCase().includes(val));
         if (matches.length > 0) {
             autocompleteList.classList.add('visible');
-            matches.forEach(shard => {
+            matches.forEach((shard, index) => {
                 const item = document.createElement('div');
                 item.textContent = shard.name;
                 item.addEventListener('click', function() {
                     shardInput.value = shard.name;
                     closeAllLists();
                     autocompleteList.classList.remove('visible');
+                    triggerSearch(); // Trigger search on click
                 });
+                item.setAttribute('data-index', index);
                 autocompleteList.appendChild(item);
             });
         } else {
@@ -200,27 +204,63 @@
         }
     });
 
+    shardInput.addEventListener('keydown', function(e) {
+        const items = autocompleteList.querySelectorAll('div');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentFocus = (currentFocus + 1) % items.length;
+            updateHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault(); // Prevent cursor movement
+            currentFocus = (currentFocus - 1 + items.length) % items.length;
+            updateHighlight(items);
+        } else if (e.key === 'Enter' && currentFocus > -1) {
+            e.preventDefault();
+            const selectedItem = items[currentFocus];
+            shardInput.value = selectedItem.textContent;
+            closeAllLists();
+            autocompleteList.classList.remove('visible');
+            // triggerSearch();
+        }
+    });
+
+    function updateHighlight(items) {
+        items.forEach((item, index) => {
+            item.classList.toggle('highlight', index === currentFocus);
+        });
+        if (currentFocus > -1) {
+            const highlightedItem = items[currentFocus];
+            highlightedItem.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
     function closeAllLists() {
         while (autocompleteList.firstChild) {
             autocompleteList.removeChild(autocompleteList.firstChild);
         }
+        currentFocus = -1;
     }
 
-    searchButton.addEventListener('click', async () => {
+    function triggerSearch() {
         const shardName = shardInput.value.toLowerCase();
         const quantity = parseInt(quantityInput.value) || 1;
         const shardKey = shardNameToKey[shardName];
         if (shardKey) {
             output.innerHTML = 'Loading...';
-            const html = await window.getRecipeTree(shardKey, quantity);
-            output.innerHTML = html;
-            toggleAllButton.textContent = 'Collapse All';
-            allExpanded = true;
-            saveDetailsState();
+            getRecipeTree(shardKey, quantity).then(html => {
+                output.innerHTML = html;
+                toggleAllButton.textContent = 'Collapse All';
+                allExpanded = true;
+                saveDetailsState();
+            });
         } else {
             output.innerHTML = 'Shard not found.';
         }
-    });
+    }
+
+    searchButton.addEventListener('click', triggerSearch);
 
     let detailsStates = new Map();
 
