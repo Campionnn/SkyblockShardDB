@@ -143,7 +143,7 @@ async function getRecipeTree(targetShard, requiredQuantity = 1) {
         const totalMaterialsHtml = `
 <h3>Time per shard for ${data.shards[targetShard].name}: ${(minCosts.get(targetShard) ?? 0).toFixed(2)} hours</h3>
 <h3>Total time for ${requiredQuantity} ${data.shards[targetShard].name}: ${((minCosts.get(targetShard) ?? 0) * requiredQuantity).toFixed(2)} hours</h3>
-<h3>Total Materials Needed for ${requiredQuantity} of ${data.shards[targetShard].name}:</h3>
+<h3>Total shards needed for ${requiredQuantity} of ${data.shards[targetShard].name}:</h3>
 <ul>
 ${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${data.shards[shardId].name}: ${qty.toFixed(2)}</li>`).join('')}
 </ul>

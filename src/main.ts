@@ -1,3 +1,4 @@
+// tsc src/main.ts --module none --target es2020
 interface Shard {
     name: string;
     family: string;
