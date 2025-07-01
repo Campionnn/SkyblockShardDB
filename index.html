@@ -62,7 +62,7 @@
             max-height: 200px;
             overflow-y: auto;
             width: 100%;
-            max-width: 600px;
+            max-width: calc(100% - 170px);
             box-sizing: border-box;
             display: none;
         }
@@ -139,7 +139,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Skyblock Shard DB</h1>
+    <h1>Shard Crafting Tree</h1>
     <div class="input-group">
         <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
         <div id="autocomplete-list" class="autocomplete-items"></div>
@@ -147,12 +147,11 @@
         <button id="search-button">Search</button>
         <button id="toggle-all-button">Collapse All</button>
     </div>
-    <div id="output">Enter a shard and quantity to see the fusion tree.</div>
+    <div id="output">Enter a shard and quantity to see the crafting tree.</div>
 </div>
 
-<script type="module">
-    import { getRecipeTree } from './main.js';
-
+<script src="./main.js"></script>
+<script>
     const shardInput = document.getElementById('shard-input');
     const autocompleteList = document.getElementById('autocomplete-list');
     const quantityInput = document.getElementById('quantity-input');
@@ -213,7 +212,7 @@
         const shardKey = shardNameToKey[shardName];
         if (shardKey) {
             output.innerHTML = 'Loading...';
-            const html = await getRecipeTree(shardKey, quantity);
+            const html = await window.getRecipeTree(shardKey, quantity);
             output.innerHTML = html;
             toggleAllButton.textContent = 'Collapse All';
             allExpanded = true;

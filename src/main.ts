@@ -180,7 +180,7 @@ function displayTree(tree: RecipeTree, data: Data): string {
 
 let data: Data;
 
-export async function getRecipeTree(targetShard: string, requiredQuantity: number = 1): Promise<string> {
+async function getRecipeTree(targetShard: string, requiredQuantity: number = 1): Promise<string> {
     try {
         data = await parseData();
 
@@ -211,3 +211,5 @@ ${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${data.shards[shardId
         return 'An error occurred while processing the recipe tree.';
     }
 }
+
+(window as any).getRecipeTree = getRecipeTree;
