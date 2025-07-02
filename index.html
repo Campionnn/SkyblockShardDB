@@ -33,9 +33,11 @@
 
         .input-group {
             display: flex;
-            gap: 10px;
             margin-bottom: 20px;
             position: relative;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
 
         #shard-input, #quantity-input, #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input {
@@ -44,6 +46,10 @@
             border-radius: 5px;
             background-color: #333;
             color: #e0e0e0;
+        }
+
+        #shard-input {
+            min-width: 400px;
         }
 
         #toggle-panel-button {
@@ -56,10 +62,6 @@
             border-radius: 5px;
             background-color: #400;
             color: #e0e0e0;
-        }
-
-        #shard-input {
-            flex: 1;
         }
 
         #quantity-input {
@@ -88,7 +90,7 @@
             z-index: 99;
             max-height: 200px;
             overflow-y: auto;
-            width: 100%;
+            width: 65%;
             max-width: 100%;
             box-sizing: border-box;
             display: none;
@@ -265,11 +267,15 @@
     <div class="main-content">
         <h1>Skyblock Shard DB</h1>
         <div class="input-group">
-            <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
-            <div id="autocomplete-list" class="autocomplete-items"></div>
-            <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
-            <button id="toggle-all-button">Collapse All</button>
-            <button id="toggle-panel-button">Edit Rates</button>
+            <div class="left-group">
+                <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off" spellcheck="false">
+                <div id="autocomplete-list" class="autocomplete-items"></div>
+                <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
+            </div>
+            <div class="right-group">
+                <button id="toggle-all-button">Collapse All</button>
+                <button id="toggle-panel-button">Edit Rates</button>
+            </div>
         </div>
         <div id="options">
             <div>
@@ -420,6 +426,7 @@
                     closeAllLists();
                     autocompleteList.classList.remove('visible');
                     setMaxQuantity();
+                    shardInput.blur();
                     triggerSearch();
                 });
                 autocompleteList.appendChild(item);
@@ -427,6 +434,10 @@
         } else {
             autocompleteList.classList.remove('visible');
         }
+    });
+
+    shardInput.addEventListener('focus', function() {
+        this.select();
     });
 
     shardInput.addEventListener('keydown', function(e) {
@@ -448,6 +459,7 @@
             closeAllLists();
             autocompleteList.classList.remove('visible');
             setMaxQuantity();
+            shardInput.blur();
             triggerSearch();
         } else if (e.key === 'Enter' && currentFocus === -1) {
             e.preventDefault();
@@ -457,6 +469,7 @@
             closeAllLists();
             autocompleteList.classList.remove('visible');
             setMaxQuantity();
+            shardInput.blur();
             triggerSearch();
         }
     });
