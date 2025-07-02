@@ -1,5 +1,5 @@
 const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"];
-async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel) {
+async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, kuudraTier, moneyPerHour) {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -19,6 +19,27 @@ async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, 
         const shards = {};
         for (const shardId in fusionJson.shards) {
             let rate = customRates[shardId] ?? (defaultRates[shardId] ?? 0);
+            if (shardId === 'L15' && rate === 0) {
+                if (kuudraTier === 't1') {
+                    rate = (3600 / ((75 + 60) + (moneyPerHour === 0 ? 0 : (155000 / moneyPerHour) * 3600)));
+                }
+                else if (kuudraTier === 't2') {
+                    rate = (3600 / ((75 + 60) + (moneyPerHour === 0 ? 0 : (310000 / moneyPerHour) * 3600)));
+                }
+                else if (kuudraTier === 't3') {
+                    rate = 2 * (3600 / ((75 + 60) + (moneyPerHour === 0 ? 0 : (582000 / moneyPerHour) * 3600)));
+                }
+                else if (kuudraTier === 't4') {
+                    rate = 2 * (3600 / ((75 + 60) + (moneyPerHour === 0 ? 0 : (1164000 / moneyPerHour) * 3600)));
+                }
+                else if (kuudraTier === 't5') {
+                    rate = 3 * (3600 / ((105 + 60) + (moneyPerHour === 0 ? 0 : (2328000 / moneyPerHour) * 3600)));
+                }
+                else if (kuudraTier === 'none') {
+                    rate = 0;
+                }
+                console.log(rate);
+            }
             if (rate > 0) {
                 if (!noFortuneShards.includes(shardId)) {
                     let effectiveFortune = hunterFortune;
@@ -168,9 +189,9 @@ function displayTree(tree, data, isTopLevel = false, totalShardsProduced = tree.
     }
 }
 let data;
-async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel) {
+async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, kuudraTier, moneyPerHour) {
     try {
-        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel);
+        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, kuudraTier, moneyPerHour);
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }

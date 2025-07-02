@@ -40,7 +40,7 @@
             width: 100%;
         }
 
-        #shard-input, #quantity-input, #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input {
+        #shard-input, #quantity-input, #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input, #kuudra-select, #money-input {
             padding: 10px;
             border: none;
             border-radius: 5px;
@@ -66,6 +66,10 @@
 
         #quantity-input {
             width: 80px;
+        }
+
+        #money-input {
+            width: 100px;
         }
 
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
@@ -233,8 +237,13 @@
 
         #options > div {
             display: flex;
-            align-items: center;
             gap: 8px;
+        }
+
+        #options > div > div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         #hunter-fortune, #newt-input, #salamander-input, #lizard-king-input, #leviathan-input {
@@ -278,33 +287,58 @@
             </div>
         </div>
         <div id="options">
-            <div>
-                <label for="hunter-fortune">Hunter Fortune (%):</label>
-                <input type="number" id="hunter-fortune" min="0" value="0">
+            <div class="options-row">
+                <div>
+                    <label for="hunter-fortune">Hunter Fortune (%):</label>
+                    <input type="number" id="hunter-fortune" min="0" value="0">
+                </div>
+                <div>
+                    <label for="chameleon-toggle">Exclude Chameleon:</label>
+                    <input type="checkbox" id="chameleon-toggle">
+                </div>
+                <div>
+                    <label for="frog-toggle">Frog Pet (bugged in game. no work)</label>
+                    <input type="checkbox" id="frog-toggle">
+                </div>
             </div>
-            <div>
-                <label for="chameleon-toggle">Exclude Chameleon:</label>
-                <input type="checkbox" id="chameleon-toggle">
+            <div class="options-row">
+                <div>
+                    <label for="newt-input">Newt lvl</label>
+                    <input type="number" id="newt-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                </div>
+                <div>
+                    <label for="salamander-input">Salamander lvl</label>
+                    <input type="number" id="salamander-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                </div>
+                <div>
+                    <label for="lizard-king-input">Lizard King lvl</label>
+                    <input type="number" id="lizard-king-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                </div>
+                <div>
+                    <label for="leviathan-input">Leviathan lvl</label>
+                    <input type="number" id="leviathan-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                </div>
             </div>
-            <div>
-                <label for="frog-toggle">Frog Pet (bugged in game. no work)</label>
-                <input type="checkbox" id="frog-toggle">
-            </div>
-            <div>
-                <label for="newt-input">Newt lvl</label>
-                <input type="number" id="newt-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
-            </div>
-            <div>
-                <label for="salamander-input">Salamander lvl</label>
-                <input type="number" id="salamander-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
-            </div>
-            <div>
-                <label for="lizard-king-input">Lizard King lvl</label>
-                <input type="number" id="lizard-king-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
-            </div>
-            <div>
-                <label for="leviathan-input">Leviathan lvl</label>
-                <input type="number" id="leviathan-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+            <div class="options-row">
+                <div>
+                    <label style="font-weight:bold">For Kraken Shards:</label>
+                </div>
+                <div>
+                    <label for="kuudra-select">Kuudra Tier:</label>
+                    <select id="kuudra-select">
+                        <option value="none">No Kuudra</option>
+                        <option value="t1">T1</option>
+                        <option value="t2">T2</option>
+                        <option value="t3">T3</option>
+                        <option value="t4">T4</option>
+                        <option value="t5" selected="selected">T5</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="money-input">Coins/hour:</label>
+                    <input type="number" id="money-input" placeholder="40000000" min="1" value="">
+                    <label for="money-input">Empty to ignore key cost</label>
+                </div>
             </div>
         </div>
         <div id="output">Enter a shard and quantity to see the crafting tree.</div>
@@ -338,6 +372,8 @@
     const salamanderInput = document.getElementById('salamander-input');
     const lizardKingInput = document.getElementById('lizard-king-input');
     const leviathanInput = document.getElementById('leviathan-input');
+    const kuudraSelect = document.getElementById('kuudra-select');
+    const moneyInput = document.getElementById('money-input');
     const output = document.getElementById('output');
 
     let shards = [];
@@ -502,6 +538,8 @@
         const salamanderLevel = parseInt(salamanderInput.value) || 0;
         const lizardKingLevel = parseInt(lizardKingInput.value) || 0;
         const leviathanLevel = parseInt(leviathanInput.value) || 0;
+        const kuudraTier = kuudraSelect.value;
+        const moneyPerHour = parseInt(moneyInput.value) || 0;
         if (shardKey) {
             output.innerHTML = 'Loading...';
             getRecipeTree(shardKey,
@@ -513,7 +551,9 @@
                 newtLevel,
                 salamanderLevel,
                 lizardKingLevel,
-                leviathanLevel
+                leviathanLevel,
+                kuudraTier,
+                moneyPerHour
             ).then(html => {
                 output.innerHTML = html;
                 toggleAllButton.textContent = 'Collapse All';
@@ -570,16 +610,44 @@
         triggerSearch();
     });
 
+    newtInput.addEventListener('focus', () => {
+        newtInput.select();
+    });
+
     salamanderInput.addEventListener('input', () => {
         triggerSearch();
+    });
+
+    salamanderInput.addEventListener('focus', () => {
+        salamanderInput.select();
     });
 
     lizardKingInput.addEventListener('input', () => {
         triggerSearch();
     });
 
+    lizardKingInput.addEventListener('focus', () => {
+        lizardKingInput.select();
+    });
+
     leviathanInput.addEventListener('input', () => {
         triggerSearch();
+    });
+
+    leviathanInput.addEventListener('focus', () => {
+        leviathanInput.select();
+    });
+
+    kuudraSelect.addEventListener('change', () => {
+        triggerSearch();
+    });
+
+    moneyInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    moneyInput.addEventListener('focus', () => {
+        moneyInput.select();
     });
 
     let detailsStates = new Map();
