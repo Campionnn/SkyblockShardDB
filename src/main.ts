@@ -42,7 +42,16 @@ interface RecipeTree {
 
 const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"]
 
-async function parseData(customRates: { [shardId: string]: number }, hunterFortune: number, excludeChameleon: boolean, frogPet: boolean): Promise<Data> {
+async function parseData(
+    customRates: { [shardId: string]: number },
+    hunterFortune: number,
+    excludeChameleon: boolean,
+    frogPet: boolean,
+    newtLevel: number,
+    salamanderLevel: number,
+    lizardKingLevel: number,
+    leviathanLevel: number
+): Promise<Data> {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -66,12 +75,24 @@ async function parseData(customRates: { [shardId: string]: number }, hunterFortu
         for (const shardId in fusionJson.shards) {
             let rate = customRates[shardId] ?? (defaultRates[shardId] ?? 0);
             if (rate > 0) {
-                const fortuneMultiplier = 1 + (hunterFortune / 100);
                 if (!noFortuneShards.includes(shardId)) {
+                    let effectiveFortune = hunterFortune;
                     if (frogPet) {
                         rate *= 1.1;
                     }
-                    rate *= fortuneMultiplier;
+                    if (fusionJson.shards[shardId].rarity === 'common') {
+                        effectiveFortune += 2 * newtLevel;
+                    }
+                    else if (fusionJson.shards[shardId].rarity === 'uncommon') {
+                        effectiveFortune += 2 * salamanderLevel;
+                    }
+                    else if (fusionJson.shards[shardId].rarity === 'rare') {
+                        effectiveFortune += lizardKingLevel;
+                    }
+                    else if (fusionJson.shards[shardId].rarity === 'epic') {
+                        effectiveFortune += leviathanLevel;
+                    }
+                    rate *= (1 + (effectiveFortune / 100));
                 }
             }
             if (excludeChameleon && shardId === 'L4') {
@@ -209,9 +230,19 @@ if (tree.method === 'direct') {
 
 let data: Data;
 
-async function getRecipeTree(targetShard: string, requiredQuantity: number, customRates: { [shardId: string]: number }, hunterFortune: number, excludeChameleon: boolean, frogPet: boolean): Promise<string> {
+async function getRecipeTree(targetShard: string,
+                             requiredQuantity: number,
+                             customRates: { [shardId: string]: number },
+                             hunterFortune: number,
+                             excludeChameleon: boolean,
+                             frogPet: boolean,
+                             newtLevel: number,
+                             salamanderLevel: number,
+                             lizardKingLevel: number,
+                             leviathanLevel: number
+): Promise<string> {
     try {
-        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet);
+        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel);
 
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);

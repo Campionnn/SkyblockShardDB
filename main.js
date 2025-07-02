@@ -1,5 +1,5 @@
 const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"];
-async function parseData(customRates, hunterFortune, excludeChameleon, frogPet) {
+async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel) {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -20,12 +20,24 @@ async function parseData(customRates, hunterFortune, excludeChameleon, frogPet) 
         for (const shardId in fusionJson.shards) {
             let rate = customRates[shardId] ?? (defaultRates[shardId] ?? 0);
             if (rate > 0) {
-                const fortuneMultiplier = 1 + (hunterFortune / 100);
                 if (!noFortuneShards.includes(shardId)) {
+                    let effectiveFortune = hunterFortune;
                     if (frogPet) {
                         rate *= 1.1;
                     }
-                    rate *= fortuneMultiplier;
+                    if (fusionJson.shards[shardId].rarity === 'common') {
+                        effectiveFortune += 2 * newtLevel;
+                    }
+                    else if (fusionJson.shards[shardId].rarity === 'uncommon') {
+                        effectiveFortune += 2 * salamanderLevel;
+                    }
+                    else if (fusionJson.shards[shardId].rarity === 'rare') {
+                        effectiveFortune += lizardKingLevel;
+                    }
+                    else if (fusionJson.shards[shardId].rarity === 'epic') {
+                        effectiveFortune += leviathanLevel;
+                    }
+                    rate *= (1 + (effectiveFortune / 100));
                 }
             }
             if (excludeChameleon && shardId === 'L4') {
@@ -155,9 +167,9 @@ function displayTree(tree, data, isTopLevel = false, totalShardsProduced = tree.
     }
 }
 let data;
-async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet) {
+async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel) {
     try {
-        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet);
+        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel);
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }

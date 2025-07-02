@@ -66,6 +66,15 @@
             width: 100px;
         }
 
+        #quantity-input::-webkit-outer-spin-button, #quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance:textfield; /* Firefox */
+        }
+
         #search-button, #toggle-all-button, #toggle-panel-button, #close-panel-button {
             cursor: pointer;
         }
@@ -226,7 +235,7 @@
             gap: 8px;
         }
 
-        #hunter-fortune {
+        #hunter-fortune, #newt-input, #salamander-input, #lizard-king-input, #leviathan-input {
             padding: 8px;
             border: none;
             border-radius: 5px;
@@ -276,6 +285,23 @@
                 <label for="frog-toggle">Frog Pet (bugged in game. no work)</label>
                 <input type="checkbox" id="frog-toggle">
             </div>
+            <br>
+            <div>
+                <label for="newt-input">Newt lvl</label>
+                <input type="number" id="newt-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+            </div>
+            <div>
+                <label for="salamander-input">Salamander lvl</label>
+                <input type="number" id="salamander-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+            </div>
+            <div>
+                <label for="lizard-king-input">Lizard King lvl</label>
+                <input type="number" id="lizard-king-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+            </div>
+            <div>
+                <label for="leviathan-input">Leviathan lvl</label>
+                <input type="number" id="leviathan-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+            </div>
         </div>
         <div id="output">Enter a shard and quantity to see the crafting tree.</div>
     </div>
@@ -305,6 +331,10 @@
     const hunterFortuneInput = document.getElementById('hunter-fortune');
     const chameleonToggle = document.getElementById('chameleon-toggle');
     const frogToggle = document.getElementById('frog-toggle');
+    const newtInput = document.getElementById('newt-input');
+    const salamanderInput = document.getElementById('salamander-input');
+    const lizardKingInput = document.getElementById('lizard-king-input');
+    const leviathanInput = document.getElementById('leviathan-input');
     const output = document.getElementById('output');
 
     let shards = [];
@@ -439,9 +469,23 @@
         const hunterFortune = parseFloat(hunterFortuneInput.value) || 0;
         const excludeChameleon = chameleonToggle.checked;
         const frogPet = frogToggle.checked;
+        const newtLevel = parseInt(newtInput.value) || 0;
+        const salamanderLevel = parseInt(salamanderInput.value) || 0;
+        const lizardKingLevel = parseInt(lizardKingInput.value) || 0;
+        const leviathanLevel = parseInt(leviathanInput.value) || 0;
         if (shardKey) {
             output.innerHTML = 'Loading...';
-            getRecipeTree(shardKey, quantity, customRates, hunterFortune, excludeChameleon, frogPet).then(html => {
+            getRecipeTree(shardKey,
+                quantity,
+                customRates,
+                hunterFortune,
+                excludeChameleon,
+                frogPet,
+                newtLevel,
+                salamanderLevel,
+                lizardKingLevel,
+                leviathanLevel
+            ).then(html => {
                 output.innerHTML = html;
                 toggleAllButton.textContent = 'Collapse All';
                 allExpanded = true;
@@ -492,6 +536,22 @@
     });
 
     frogToggle.addEventListener('change', () => {
+        triggerSearch();
+    });
+
+    newtInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    salamanderInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    lizardKingInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    leviathanInput.addEventListener('input', () => {
         triggerSearch();
     });
 
