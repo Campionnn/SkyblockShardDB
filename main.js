@@ -116,6 +116,15 @@ function collectTotalQuantities(tree) {
 function shardDetails(shard) {
     return `Name: ${shard.name}\nFamily: ${shard.family}\nType: ${shard.type}\nRarity: ${shard.rarity}\nFuse Amount: ${shard.fuse_amount}\nInternal ID: ${shard.internal_id}\nRate: ${shard.rate}`;
 }
+// Helper function to convert decimal hours to hours and minutes
+function decimalHoursToHoursMinutes(decimalHours) {
+    const hours = Math.floor(decimalHours);
+    const minutes = Math.round((decimalHours - hours) * 60);
+    if (minutes === 0) {
+        return `${hours} hours`;
+    }
+    return `${hours} hours ${minutes} minutes`;
+}
 function displayTree(tree, data) {
     const shard = data.shards[tree.shard];
     const shardName = `<span title="${shardDetails(shard)}">${shard.name}</span>`;
@@ -123,7 +132,6 @@ function displayTree(tree, data) {
         return `<div>${shardName}: ${Math.ceil(tree.quantity)} (direct)</div>`;
     }
     else {
-        // const recipe = tree.recipe!;
         const input1 = tree.inputs[0];
         const input2 = tree.inputs[1];
         const input1Name = `<span title="${shardDetails(data.shards[input1.shard])}">${data.shards[input1.shard].name}</span>`;
@@ -152,20 +160,18 @@ async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, exclu
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);
         const totalMaterialsHtml = `
-<h3>Time per shard for ${data.shards[targetShard].name}: ${(minCosts.get(targetShard) ?? 0).toFixed(2)} hours</h3>
-<h3>Total time for ${requiredQuantity} ${data.shards[targetShard].name}: ${((minCosts.get(targetShard) ?? 0) * requiredQuantity).toFixed(2)} hours</h3>
+<h3>Time per shard for ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes(minCosts.get(targetShard) ?? 0)}</h3>
+<h3>Total time for ${requiredQuantity} ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes((minCosts.get(targetShard) ?? 0) * requiredQuantity)}</h3>
 <h3>Total shards needed for ${requiredQuantity} ${data.shards[targetShard].name}:</h3>
 <ul>
-${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${qty.toFixed(2)}x ${data.shards[shardId].name} at ${(data.shards[shardId].rate).toFixed(2)}/hour = ${(qty / data.shards[shardId].rate).toFixed(2)} hours</li>`).join('')}
+${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${Math.ceil(qty)}x ${data.shards[shardId].name} at ${decimalHoursToHoursMinutes(data.shards[shardId].rate)}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
 </ul>
 <h2>Fusion Tree:</h2>
 `;
         let treeHtml = displayTree(tree, data);
-        // console.log(`Time per shard for ${targetShard}: ${(minCosts.get(targetShard) ?? 0).toFixed(4)} hours`);
         return totalMaterialsHtml + treeHtml;
     }
     catch (error) {
-        // console.error('Error:', error);
         return 'An error occurred while processing the recipe tree.';
     }
 }
