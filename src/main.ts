@@ -100,6 +100,7 @@ async function parseData(
             }
             shards[shardId] = {
                 ...fusionJson.shards[shardId],
+                id: shardId,
                 rate
             };
         }
@@ -207,16 +208,16 @@ function decimalHoursToHoursMinutes(decimalHours: number): string {
 function displayTree(tree: RecipeTree, data: Data, isTopLevel: boolean = false, totalShardsProduced: number = tree.quantity): string {
     const shard = data.shards[tree.shard];
     const shardName = `<span title="${shardDetails(shard)}">${shard.name}</span>`;
-if (tree.method === 'direct') {
-    return `<div>${shardName}: ${tree.quantity} (direct)</div>`;
-} else {
-    const input1 = tree.inputs![0];
-    const input2 = tree.inputs![1];
-    const input1Name = `<span title="${shardDetails(data.shards[input1.shard])}">${data.shards[input1.shard].name}</span>`;
-    const input2Name = `<span title="${shardDetails(data.shards[input2.shard])}">${data.shards[input2.shard].name}</span>`;
-    const displayQuantity = isTopLevel ? totalShardsProduced : tree.quantity;
-    const summary = `${displayQuantity}x ${shardName} = ${input1.quantity}x ${input1Name} + ${input2.quantity}x ${input2Name}`;
-    return `
+    if (tree.method === 'direct') {
+        return `<div>${shardName}: ${tree.quantity} (direct)</div>`;
+    } else {
+        const input1 = tree.inputs![0];
+        const input2 = tree.inputs![1];
+        const input1Name = `<span title="${shardDetails(data.shards[input1.shard])}">${data.shards[input1.shard].name}</span>`;
+        const input2Name = `<span title="${shardDetails(data.shards[input2.shard])}">${data.shards[input2.shard].name}</span>`;
+        const displayQuantity = isTopLevel ? totalShardsProduced : tree.quantity;
+        const summary = `${displayQuantity}x ${shardName} = ${input1.quantity}x ${input1Name} + ${input2.quantity}x ${input2Name}`;
+        return `
 <details open>
     <summary>${summary}</summary>
     <div style="margin-left: 20px;">
@@ -224,8 +225,8 @@ if (tree.method === 'direct') {
         ${displayTree(input2, data)}
     </div>
 </details>
-`;
-}
+    `;
+    }
 }
 
 let data: Data;

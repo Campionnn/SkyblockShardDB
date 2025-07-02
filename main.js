@@ -45,6 +45,7 @@ async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, 
             }
             shards[shardId] = {
                 ...fusionJson.shards[shardId],
+                id: shardId,
                 rate
             };
         }
@@ -163,7 +164,7 @@ function displayTree(tree, data, isTopLevel = false, totalShardsProduced = tree.
         ${displayTree(input2, data)}
     </div>
 </details>
-`;
+    `;
     }
 }
 let data;
