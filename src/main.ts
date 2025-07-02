@@ -40,6 +40,8 @@ interface RecipeTree {
     inputs?: RecipeTree[];
 }
 
+const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"]
+
 async function parseData(hunterFortune: number, excludeChameleon: boolean, customRates: { [shardId: string]: number }): Promise<Data> {
     try {
         const fusionResponse = await fetch('fusion-data.json');
@@ -64,7 +66,10 @@ async function parseData(hunterFortune: number, excludeChameleon: boolean, custo
         for (const shardId in fusionJson.shards) {
             let rate = customRates[shardId] ?? (defaultRates[shardId] ?? 0);
             if (rate > 0) {
-                rate = rate * (1 + hunterFortune / 100);
+                const fortuneMultiplier = 1 + (hunterFortune / 100);
+                if (!noFortuneShards.includes(shardId)) {
+                    rate *= fortuneMultiplier;
+                }
             }
             if (excludeChameleon && shardId === 'L4') {
                 rate = 0;
@@ -214,7 +219,6 @@ async function getRecipeTree(targetShard: string, requiredQuantity: number, hunt
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);
 
-        // Calculate the number of crafts needed and total shards produced
         let totalShardsProduced = requiredQuantity;
         let craftsNeeded = 1;
         const choice = choices.get(targetShard);
