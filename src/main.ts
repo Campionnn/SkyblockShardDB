@@ -39,7 +39,7 @@ interface RecipeTree {
     inputs?: RecipeTree[];
 }
 
-async function parseData(hunterFortune: number): Promise<Data> {
+async function parseData(hunterFortune: number, excludeChameleon: boolean): Promise<Data> {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -63,9 +63,11 @@ async function parseData(hunterFortune: number): Promise<Data> {
         const shards: Shards = {};
         for (const shardId in fusionJson.shards) {
             let rate = customRates[shardId] ?? (defaultRates[shardId] ?? 0);
-            // Apply Hunter Fortune multiplier
             if (rate > 0) {
                 rate = rate * (1 + hunterFortune / 100);
+            }
+            if (excludeChameleon && shardId === 'L4') {
+                rate = 0;
             }
             shards[shardId] = {
                 ...fusionJson.shards[shardId],
@@ -79,7 +81,7 @@ async function parseData(hunterFortune: number): Promise<Data> {
     }
 }
 
-function computeMinCosts(data: Data, excludeChameleon: boolean): { minCosts: Map<string, number>, choices: Map<string, RecipeChoice> } {
+function computeMinCosts(data: Data): { minCosts: Map<string, number>, choices: Map<string, RecipeChoice> } {
     const minCosts = new Map<string, number>();
     const choices = new Map<string, RecipeChoice>();
     const shards = Object.keys(data.shards);
@@ -96,11 +98,6 @@ function computeMinCosts(data: Data, excludeChameleon: boolean): { minCosts: Map
         shards.forEach(outputShard => {
             const recipes = data.recipes[outputShard] || [];
             recipes.forEach(recipe => {
-                if (excludeChameleon) {
-                    if (recipe.inputs[0] === "L4" || recipe.inputs[1] === "L4") {
-                        return; // Skip recipes with Chameleon
-                    }
-                }
                 const [input1, input2] = recipe.inputs;
                 const fuse1 = data.shards[input1].fuse_amount;
                 const fuse2 = data.shards[input2].fuse_amount;
@@ -203,13 +200,13 @@ let data: Data;
 
 async function getRecipeTree(targetShard: string, requiredQuantity: number, hunterFortune: number, excludeChameleon: boolean): Promise<string> {
     try {
-        data = await parseData(hunterFortune);
+        data = await parseData(hunterFortune, excludeChameleon);
 
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }
 
-        const { minCosts, choices } = computeMinCosts(data, excludeChameleon);
+        const { minCosts, choices } = computeMinCosts(data);
         const tree = buildRecipeTree(targetShard, choices);
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);
@@ -219,7 +216,7 @@ async function getRecipeTree(targetShard: string, requiredQuantity: number, hunt
 <h3>Total time for ${requiredQuantity} ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes((minCosts.get(targetShard) ?? 0) * requiredQuantity)}</h3>
 <h3>Total shards needed for ${requiredQuantity} ${data.shards[targetShard].name}:</h3>
 <ul>
-${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${Math.ceil(qty)}x ${data.shards[shardId].name} at ${decimalHoursToHoursMinutes(data.shards[shardId].rate)}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
+${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${Math.ceil(qty)}x ${data.shards[shardId].name} at ${(data.shards[shardId].rate).toFixed(2)}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
 </ul>
 <h2>Fusion Tree:</h2>
 `;
