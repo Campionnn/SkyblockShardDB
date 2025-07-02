@@ -274,7 +274,7 @@
     <div id="side-panel" class="side-panel">
         <button id="close-panel-button" title="Close panel">×</button>
         <h2>Edit Shard Rates</h2>
-        <h4>These are rates without hunter fortune</h4>
+        <h4>These are rates without hunter fortune and in shards per hour</h4>
         <input type="text" id="rate-filter-input" placeholder="Filter shards..." autocomplete="off">
         <button id="reset-rates-button">Reset to Defaults</button>
         <div id="rates-list"></div>
@@ -302,6 +302,7 @@
     let shardNameToKey = {};
     let allExpanded = true;
     let defaultRates = {};
+    let customRates = {};
     let currentFocus = -1;
 
     async function loadData() {
@@ -314,13 +315,13 @@
             acc[shard.name.toLowerCase()] = shard.key;
             return acc;
         }, {});
+        customRates = { ...defaultRates };
         renderRatesList();
     }
 
     loadData();
 
     function renderRatesList(filter = '') {
-        const savedRates = JSON.parse(localStorage.getItem('customRates') || '{}');
         ratesList.innerHTML = '';
         const filteredShards = filter
             ? shards.filter(shard => shard.name.toLowerCase().includes(filter.toLowerCase()))
@@ -329,21 +330,18 @@
             const rateItem = document.createElement('div');
             rateItem.className = 'rate-item';
             rateItem.innerHTML = `
-                    <label>${shard.name}</label>
-                    <input type="number" class="rate-input" data-shard="${shard.key}" value="${savedRates[shard.key] || defaultRates[shard.key] || 0}" min="0" step="0.01">
-                `;
+                <label>${shard.name}</label>
+                <input type="number" class="rate-input" data-shard="${shard.key}" value="${customRates[shard.key] || defaultRates[shard.key] || 0}" min="0" step="0.01">
+            `;
             ratesList.appendChild(rateItem);
         });
-        updateRates();
     }
 
     function updateRates() {
         const inputs = ratesList.querySelectorAll('.rate-input');
-        const customRates = {};
         inputs.forEach(input => {
             customRates[input.dataset.shard] = parseFloat(input.value) || 0;
         });
-        localStorage.setItem('customRates', JSON.stringify(customRates));
     }
 
     rateFilterInput.addEventListener('input', function() {
@@ -425,7 +423,7 @@
         const excludeChameleon = chameleonToggle.checked;
         if (shardKey) {
             output.innerHTML = 'Loading...';
-            getRecipeTree(shardKey, quantity, hunterFortune, excludeChameleon).then(html => {
+            getRecipeTree(shardKey, quantity, hunterFortune, excludeChameleon, customRates).then(html => {
                 output.innerHTML = html;
                 toggleAllButton.textContent = 'Collapse All';
                 allExpanded = true;
@@ -451,15 +449,24 @@
     ratesList.addEventListener('input', (event) => {
         if (event.target.classList.contains('rate-input')) {
             updateRates();
+            triggerSearch();
         }
     });
 
     resetRatesButton.addEventListener('click', async () => {
         if (confirm('Are you sure you want to reset all rates to their defaults? This will clear all custom rates.')) {
-            localStorage.removeItem('customRates');
-            resetRates();
-            await loadData();
+            customRates = { ...defaultRates };
+            renderRatesList(rateFilterInput.value);
+            triggerSearch();
         }
+    });
+
+    chameleonToggle.addEventListener('change', () => {
+        triggerSearch();
+    });
+
+    hunterFortuneInput.addEventListener('input', () => {
+        triggerSearch();
     });
 
     let detailsStates = new Map();

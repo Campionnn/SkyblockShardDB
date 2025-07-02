@@ -1,10 +1,9 @@
-async function parseData(hunterFortune, excludeChameleon) {
+async function parseData(hunterFortune, excludeChameleon, customRates) {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
         const ratesResponse = await fetch('rates.json');
         const defaultRates = await ratesResponse.json();
-        const customRates = JSON.parse(localStorage.getItem('customRates') || '{}');
         const recipes = {};
         for (const outputShard in fusionJson.recipes) {
             recipes[outputShard] = [];
@@ -86,7 +85,7 @@ function assignQuantities(tree, requiredQuantity, data) {
     if (tree.method === 'recipe') {
         const recipe = tree.recipe;
         const outputQuantity = recipe.outputQuantity;
-        const craftsNeeded = requiredQuantity / outputQuantity;
+        const craftsNeeded = Math.ceil(requiredQuantity / outputQuantity);
         const [input1, input2] = recipe.inputs;
         const fuse1 = data.shards[input1].fuse_amount;
         const fuse2 = data.shards[input2].fuse_amount;
@@ -111,12 +110,12 @@ function collectTotalQuantities(tree) {
     return totals;
 }
 function shardDetails(shard) {
-    return `Name: ${shard.name}\nFamily: ${shard.family}\nType: ${shard.type}\nRarity: ${shard.rarity}\nFuse Amount: ${shard.fuse_amount}\nInternal ID: ${shard.internal_id}\nRate: ${shard.rate}`;
+    return `ID: ${shard.id}\nName: ${shard.name}\nFamily: ${shard.family}\nType: ${shard.type}\nRarity: ${shard.rarity}\nFuse Amount: ${shard.fuse_amount}\nInternal ID: ${shard.internal_id}\nRate: ${shard.rate}`;
 }
 function decimalHoursToHoursMinutes(decimalHours) {
     const hours = Math.floor(decimalHours);
     const minutes = Math.round((decimalHours - hours) * 60);
-    if (minutes === 0) {
+    if (minutes === 0 || isNaN(minutes)) {
         return `${hours} hours`;
     }
     if (hours === 0) {
@@ -124,18 +123,19 @@ function decimalHoursToHoursMinutes(decimalHours) {
     }
     return `${hours} hours ${minutes} minutes`;
 }
-function displayTree(tree, data) {
+function displayTree(tree, data, isTopLevel = false, totalShardsProduced = tree.quantity) {
     const shard = data.shards[tree.shard];
     const shardName = `<span title="${shardDetails(shard)}">${shard.name}</span>`;
     if (tree.method === 'direct') {
-        return `<div>${shardName}: ${Math.ceil(tree.quantity)} (direct)</div>`;
+        return `<div>${shardName}: ${tree.quantity} (direct)</div>`;
     }
     else {
         const input1 = tree.inputs[0];
         const input2 = tree.inputs[1];
         const input1Name = `<span title="${shardDetails(data.shards[input1.shard])}">${data.shards[input1.shard].name}</span>`;
         const input2Name = `<span title="${shardDetails(data.shards[input2.shard])}">${data.shards[input2.shard].name}</span>`;
-        const summary = `${Math.ceil(tree.quantity)}x ${shardName} = ${Math.ceil(input1.quantity)}x ${input1Name} + ${Math.ceil(input2.quantity)}x ${input2Name}`;
+        const displayQuantity = isTopLevel ? totalShardsProduced : tree.quantity;
+        const summary = `${displayQuantity}x ${shardName} = ${input1.quantity}x ${input1Name} + ${input2.quantity}x ${input2Name}`;
         return `
 <details open>
     <summary>${summary}</summary>
@@ -148,9 +148,9 @@ function displayTree(tree, data) {
     }
 }
 let data;
-async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, excludeChameleon) {
+async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, excludeChameleon, customRates) {
     try {
-        data = await parseData(hunterFortune, excludeChameleon);
+        data = await parseData(hunterFortune, excludeChameleon, customRates);
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }
@@ -158,16 +158,25 @@ async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, exclu
         const tree = buildRecipeTree(targetShard, choices);
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);
+        // Calculate the number of crafts needed and total shards produced
+        let totalShardsProduced = requiredQuantity;
+        let craftsNeeded = 1;
+        const choice = choices.get(targetShard);
+        if (choice?.recipe) {
+            const outputQuantity = choice.recipe.outputQuantity;
+            craftsNeeded = Math.ceil(requiredQuantity / outputQuantity);
+            totalShardsProduced = craftsNeeded * outputQuantity;
+        }
         const totalMaterialsHtml = `
 <h3>Time per shard for ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes(minCosts.get(targetShard) ?? 0)}</h3>
-<h3>Total time for ${requiredQuantity} ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes((minCosts.get(targetShard) ?? 0) * requiredQuantity)}</h3>
+<h3>Total time for ${totalShardsProduced} ${data.shards[targetShard].name} (${craftsNeeded} craft${craftsNeeded > 1 ? 's' : ''}): ${decimalHoursToHoursMinutes((minCosts.get(targetShard) ?? 0) * totalShardsProduced)}</h3>
 <h3>Total shards needed for ${requiredQuantity} ${data.shards[targetShard].name}:</h3>
 <ul>
-${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${Math.ceil(qty)}x ${data.shards[shardId].name} at ${data.shards[shardId].rate.toFixed(2).replace(/\.00$/, '')}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
+${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${qty}x ${data.shards[shardId].name} at ${data.shards[shardId].rate.toFixed(2).replace(/\.00$/, '')}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
 </ul>
 <h2>Fusion Tree:</h2>
 `;
-        let treeHtml = displayTree(tree, data);
+        let treeHtml = displayTree(tree, data, true, totalShardsProduced);
         return totalMaterialsHtml + treeHtml;
     }
     catch (error) {
