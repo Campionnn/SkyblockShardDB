@@ -395,6 +395,14 @@
             closeAllLists();
             autocompleteList.classList.remove('visible');
             triggerSearch();
+        } else if (e.key === 'Enter' && currentFocus === -1) {
+            e.preventDefault();
+            currentFocus = (currentFocus + 1) % items.length;
+            const selectedItem = items[currentFocus];
+            shardInput.value = selectedItem.textContent;
+            closeAllLists();
+            autocompleteList.classList.remove('visible');
+            triggerSearch();
         }
     });
 
@@ -444,6 +452,10 @@
     closePanelButton.addEventListener('click', () => {
         sidePanel.classList.remove('open');
         togglePanelButton.textContent = 'Edit Rates';
+    });
+
+    quantityInput.addEventListener('input', () => {
+        triggerSearch();
     });
 
     ratesList.addEventListener('input', (event) => {
