@@ -42,7 +42,7 @@ interface RecipeTree {
 
 const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"]
 
-async function parseData(hunterFortune: number, excludeChameleon: boolean, customRates: { [shardId: string]: number }): Promise<Data> {
+async function parseData(customRates: { [shardId: string]: number }, hunterFortune: number, excludeChameleon: boolean, frogPet: boolean): Promise<Data> {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -68,6 +68,9 @@ async function parseData(hunterFortune: number, excludeChameleon: boolean, custo
             if (rate > 0) {
                 const fortuneMultiplier = 1 + (hunterFortune / 100);
                 if (!noFortuneShards.includes(shardId)) {
+                    if (frogPet) {
+                        rate *= 1.1;
+                    }
                     rate *= fortuneMultiplier;
                 }
             }
@@ -206,9 +209,9 @@ if (tree.method === 'direct') {
 
 let data: Data;
 
-async function getRecipeTree(targetShard: string, requiredQuantity: number, hunterFortune: number, excludeChameleon: boolean, customRates: { [shardId: string]: number }): Promise<string> {
+async function getRecipeTree(targetShard: string, requiredQuantity: number, customRates: { [shardId: string]: number }, hunterFortune: number, excludeChameleon: boolean, frogPet: boolean): Promise<string> {
     try {
-        data = await parseData(hunterFortune, excludeChameleon, customRates);
+        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet);
 
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);

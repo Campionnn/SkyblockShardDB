@@ -1,4 +1,5 @@
-async function parseData(hunterFortune, excludeChameleon, customRates) {
+const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"];
+async function parseData(customRates, hunterFortune, excludeChameleon, frogPet) {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -19,7 +20,13 @@ async function parseData(hunterFortune, excludeChameleon, customRates) {
         for (const shardId in fusionJson.shards) {
             let rate = customRates[shardId] ?? (defaultRates[shardId] ?? 0);
             if (rate > 0) {
-                rate = rate * (1 + hunterFortune / 100);
+                const fortuneMultiplier = 1 + (hunterFortune / 100);
+                if (!noFortuneShards.includes(shardId)) {
+                    if (frogPet) {
+                        rate *= 1.1;
+                    }
+                    rate *= fortuneMultiplier;
+                }
             }
             if (excludeChameleon && shardId === 'L4') {
                 rate = 0;
@@ -148,9 +155,9 @@ function displayTree(tree, data, isTopLevel = false, totalShardsProduced = tree.
     }
 }
 let data;
-async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, excludeChameleon, customRates) {
+async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet) {
     try {
-        data = await parseData(hunterFortune, excludeChameleon, customRates);
+        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet);
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }
@@ -158,7 +165,6 @@ async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, exclu
         const tree = buildRecipeTree(targetShard, choices);
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);
-        // Calculate the number of crafts needed and total shards produced
         let totalShardsProduced = requiredQuantity;
         let craftsNeeded = 1;
         const choice = choices.get(targetShard);

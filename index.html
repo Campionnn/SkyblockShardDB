@@ -231,7 +231,7 @@
             width: 80px;
         }
 
-        #chameleon-toggle {
+        #chameleon-toggle, #frog-toggle {
             width: 18px;
             height: 18px;
             accent-color: #555;
@@ -268,6 +268,10 @@
                 <label for="chameleon-toggle">Exclude Chameleon:</label>
                 <input type="checkbox" id="chameleon-toggle">
             </div>
+            <div>
+                <label for="frog-toggle">Frog Pet (bugged in game. no work)</label>
+                <input type="checkbox" id="frog-toggle">
+            </div>
         </div>
         <div id="output">Enter a shard and quantity to see the crafting tree.</div>
     </div>
@@ -296,6 +300,7 @@
     const closePanelButton = document.getElementById('close-panel-button');
     const hunterFortuneInput = document.getElementById('hunter-fortune');
     const chameleonToggle = document.getElementById('chameleon-toggle');
+    const frogToggle = document.getElementById('frog-toggle');
     const output = document.getElementById('output');
 
     let shards = [];
@@ -429,9 +434,10 @@
         const shardKey = shardNameToKey[shardName];
         const hunterFortune = parseFloat(hunterFortuneInput.value) || 0;
         const excludeChameleon = chameleonToggle.checked;
+        const frogPet = frogToggle.checked;
         if (shardKey) {
             output.innerHTML = 'Loading...';
-            getRecipeTree(shardKey, quantity, hunterFortune, excludeChameleon, customRates).then(html => {
+            getRecipeTree(shardKey, quantity, customRates, hunterFortune, excludeChameleon, frogPet).then(html => {
                 output.innerHTML = html;
                 toggleAllButton.textContent = 'Collapse All';
                 allExpanded = true;
@@ -478,6 +484,10 @@
     });
 
     hunterFortuneInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    frogToggle.addEventListener('change', () => {
         triggerSearch();
     });
 
