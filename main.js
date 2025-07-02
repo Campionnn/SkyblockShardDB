@@ -113,12 +113,14 @@ function collectTotalQuantities(tree) {
 function shardDetails(shard) {
     return `Name: ${shard.name}\nFamily: ${shard.family}\nType: ${shard.type}\nRarity: ${shard.rarity}\nFuse Amount: ${shard.fuse_amount}\nInternal ID: ${shard.internal_id}\nRate: ${shard.rate}`;
 }
-// Helper function to convert decimal hours to hours and minutes
 function decimalHoursToHoursMinutes(decimalHours) {
     const hours = Math.floor(decimalHours);
     const minutes = Math.round((decimalHours - hours) * 60);
     if (minutes === 0) {
         return `${hours} hours`;
+    }
+    if (hours === 0) {
+        return `${minutes} minutes`;
     }
     return `${hours} hours ${minutes} minutes`;
 }
@@ -161,7 +163,7 @@ async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, exclu
 <h3>Total time for ${requiredQuantity} ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes((minCosts.get(targetShard) ?? 0) * requiredQuantity)}</h3>
 <h3>Total shards needed for ${requiredQuantity} ${data.shards[targetShard].name}:</h3>
 <ul>
-${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${Math.ceil(qty)}x ${data.shards[shardId].name} at ${(data.shards[shardId].rate).toFixed(2)}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
+${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${Math.ceil(qty)}x ${data.shards[shardId].name} at ${data.shards[shardId].rate.toFixed(2).replace(/\.00$/, '')}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
 </ul>
 <h2>Fusion Tree:</h2>
 `;
