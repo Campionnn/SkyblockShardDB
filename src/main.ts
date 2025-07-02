@@ -39,12 +39,7 @@ interface RecipeTree {
     inputs?: RecipeTree[];
 }
 
-function formatNumber(x: number): string {
-    const rounded = Math.round(x * 100) / 100;
-    return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(2);
-}
-
-async function parseData(hunterFortune: number, excludeChameleon: boolean): Promise<Data> {
+async function parseData(hunterFortune: number): Promise<Data> {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -60,10 +55,7 @@ async function parseData(hunterFortune: number, excludeChameleon: boolean): Prom
                 const qty = parseInt(qtyStr);
                 const recipeList = fusionJson.recipes[outputShard][qtyStr];
                 recipeList.forEach((inputs: [string, string]) => {
-                    // Exclude recipes containing L4 if toggle is enabled
-                    if (!excludeChameleon || (inputs[0] !== "L4" && inputs[1] !== "L4")) {
-                        recipes[outputShard].push({ inputs, outputQuantity: qty });
-                    }
+                    recipes[outputShard].push({ inputs, outputQuantity: qty });
                 });
             }
         }
@@ -87,7 +79,7 @@ async function parseData(hunterFortune: number, excludeChameleon: boolean): Prom
     }
 }
 
-function computeMinCosts(data: Data): { minCosts: Map<string, number>, choices: Map<string, RecipeChoice> } {
+function computeMinCosts(data: Data, excludeChameleon: boolean): { minCosts: Map<string, number>, choices: Map<string, RecipeChoice> } {
     const minCosts = new Map<string, number>();
     const choices = new Map<string, RecipeChoice>();
     const shards = Object.keys(data.shards);
@@ -104,6 +96,11 @@ function computeMinCosts(data: Data): { minCosts: Map<string, number>, choices: 
         shards.forEach(outputShard => {
             const recipes = data.recipes[outputShard] || [];
             recipes.forEach(recipe => {
+                if (excludeChameleon) {
+                    if (recipe.inputs[0] === "L4" || recipe.inputs[1] === "L4") {
+                        return; // Skip recipes with Chameleon
+                    }
+                }
                 const [input1, input2] = recipe.inputs;
                 const fuse1 = data.shards[input1].fuse_amount;
                 const fuse2 = data.shards[input2].fuse_amount;
@@ -197,13 +194,13 @@ let data: Data;
 
 async function getRecipeTree(targetShard: string, requiredQuantity: number, hunterFortune: number, excludeChameleon: boolean): Promise<string> {
     try {
-        data = await parseData(hunterFortune, excludeChameleon);
+        data = await parseData(hunterFortune);
 
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }
 
-        const { minCosts, choices } = computeMinCosts(data);
+        const { minCosts, choices } = computeMinCosts(data, excludeChameleon);
         const tree = buildRecipeTree(targetShard, choices);
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);

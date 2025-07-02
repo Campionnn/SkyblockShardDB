@@ -1,8 +1,4 @@
-function formatNumber(x) {
-    const rounded = Math.round(x * 100) / 100;
-    return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(2);
-}
-async function parseData(hunterFortune, excludeChameleon) {
+async function parseData(hunterFortune) {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -16,10 +12,7 @@ async function parseData(hunterFortune, excludeChameleon) {
                 const qty = parseInt(qtyStr);
                 const recipeList = fusionJson.recipes[outputShard][qtyStr];
                 recipeList.forEach((inputs) => {
-                    // Exclude recipes containing L4 if toggle is enabled
-                    if (!excludeChameleon || (inputs[0] !== "L4" && inputs[1] !== "L4")) {
-                        recipes[outputShard].push({ inputs, outputQuantity: qty });
-                    }
+                    recipes[outputShard].push({ inputs, outputQuantity: qty });
                 });
             }
         }
@@ -41,7 +34,7 @@ async function parseData(hunterFortune, excludeChameleon) {
         throw new Error(`Failed to parse data: ${error}`);
     }
 }
-function computeMinCosts(data) {
+function computeMinCosts(data, excludeChameleon) {
     const minCosts = new Map();
     const choices = new Map();
     const shards = Object.keys(data.shards);
@@ -56,6 +49,11 @@ function computeMinCosts(data) {
         shards.forEach(outputShard => {
             const recipes = data.recipes[outputShard] || [];
             recipes.forEach(recipe => {
+                if (excludeChameleon) {
+                    if (recipe.inputs[0] === "L4" || recipe.inputs[1] === "L4") {
+                        return; // Skip recipes with Chameleon
+                    }
+                }
                 const [input1, input2] = recipe.inputs;
                 const fuse1 = data.shards[input1].fuse_amount;
                 const fuse2 = data.shards[input2].fuse_amount;
@@ -145,11 +143,11 @@ function displayTree(tree, data) {
 let data;
 async function getRecipeTree(targetShard, requiredQuantity, hunterFortune, excludeChameleon) {
     try {
-        data = await parseData(hunterFortune, excludeChameleon);
+        data = await parseData(hunterFortune);
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }
-        const { minCosts, choices } = computeMinCosts(data);
+        const { minCosts, choices } = computeMinCosts(data, excludeChameleon);
         const tree = buildRecipeTree(targetShard, choices);
         assignQuantities(tree, requiredQuantity, data);
         const totalQuantities = collectTotalQuantities(tree);
