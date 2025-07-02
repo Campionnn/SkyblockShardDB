@@ -18,6 +18,12 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
+            display: flex;
+            gap: 20px;
+        }
+
+        .main-content {
+            flex: 1;
         }
 
         h1 {
@@ -32,11 +38,19 @@
             position: relative;
         }
 
-        #shard-input, #quantity-input, #search-button, #toggle-all-button {
+        #shard-input, #quantity-input, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input {
             padding: 10px;
             border: none;
             border-radius: 5px;
             background-color: #333;
+            color: #e0e0e0;
+        }
+
+        #reset-rates-button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #400;
             color: #e0e0e0;
         }
 
@@ -48,7 +62,7 @@
             width: 100px;
         }
 
-        #search-button, #toggle-all-button {
+        #search-button, #toggle-all-button, #toggle-panel-button, #close-panel-button {
             cursor: pointer;
         }
 
@@ -62,7 +76,7 @@
             max-height: 200px;
             overflow-y: auto;
             width: 100%;
-            max-width: calc(100% - 170px);
+            max-width: 100%;
             box-sizing: border-box;
             display: none;
         }
@@ -136,6 +150,94 @@
             text-decoration: underline dotted;
         }
 
+        .side-panel {
+            width: 250px;
+            background-color: #1e1e1e;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(100%);
+            position: fixed;
+            right: 0;
+            top: 20px;
+            bottom: 20px;
+        }
+
+        .side-panel.open {
+            transform: translateX(0);
+        }
+
+        .rate-item {
+            margin-bottom: 10px;
+        }
+
+        .rate-item label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .rate-input, #rate-filter-input {
+            width: 90%;
+        }
+
+        #reset-rates-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        #close-panel-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            font-size: 18px;
+            padding: 5px;
+        }
+
+        #close-panel-button:hover {
+            color: #ffffff;
+        }
+
+        #options {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        #options > div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #hunter-fortune {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: #e0e0e0;
+            width: 80px;
+        }
+
+        #chameleon-toggle {
+            width: 18px;
+            height: 18px;
+            accent-color: #555;
+            cursor: pointer;
+        }
+
         footer {
             text-align: center;
             margin-top: 40px;
@@ -147,15 +249,36 @@
 </head>
 <body>
 <div class="container">
-    <h1>Skyblock Shard DB</h1>
-    <div class="input-group">
-        <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
-        <div id="autocomplete-list" class="autocomplete-items"></div>
-        <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
-        <button id="search-button">Search</button>
-        <button id="toggle-all-button">Collapse All</button>
+    <div class="main-content">
+        <h1>Skyblock Shard DB</h1>
+        <div class="input-group">
+            <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
+            <div id="autocomplete-list" class="autocomplete-items"></div>
+            <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
+            <button id="search-button">Search</button>
+            <button id="toggle-all-button">Collapse All</button>
+            <button id="toggle-panel-button">Edit Rates</button>
+        </div>
+        <div id="options">
+            <div>
+                <label for="hunter-fortune">Hunter Fortune (%):</label>
+                <input type="number" id="hunter-fortune" min="0" value="0">
+            </div>
+            <div>
+                <label for="chameleon-toggle">Exclude Chameleon:</label>
+                <input type="checkbox" id="chameleon-toggle">
+            </div>
+        </div>
+        <div id="output">Enter a shard and quantity to see the crafting tree.</div>
     </div>
-    <div id="output">Enter a shard and quantity to see the crafting tree.</div>
+    <div id="side-panel" class="side-panel">
+        <button id="close-panel-button" title="Close panel">×</button>
+        <h2>Edit Shard Rates</h2>
+        <h4>These are rates without hunter fortune</h4>
+        <input type="text" id="rate-filter-input" placeholder="Filter shards..." autocomplete="off">
+        <button id="reset-rates-button">Reset to Defaults</button>
+        <div id="rates-list"></div>
+    </div>
 </div>
 
 <script src="./main.js"></script>
@@ -165,24 +288,67 @@
     const quantityInput = document.getElementById('quantity-input');
     const searchButton = document.getElementById('search-button');
     const toggleAllButton = document.getElementById('toggle-all-button');
+    const togglePanelButton = document.getElementById('toggle-panel-button');
+    const sidePanel = document.getElementById('side-panel');
+    const ratesList = document.getElementById('rates-list');
+    const resetRatesButton = document.getElementById('reset-rates-button');
+    const rateFilterInput = document.getElementById('rate-filter-input');
+    const closePanelButton = document.getElementById('close-panel-button');
+    const hunterFortuneInput = document.getElementById('hunter-fortune');
+    const chameleonToggle = document.getElementById('chameleon-toggle');
     const output = document.getElementById('output');
 
     let shards = [];
     let shardNameToKey = {};
     let allExpanded = true;
+    let defaultRates = {};
     let currentFocus = -1;
 
-    async function loadShards() {
-        const response = await fetch('fusion-data.json');
-        const data = await response.json();
-        shards = Object.entries(data.shards).map(([key, shard]) => ({ key, ...shard }));
+    async function loadData() {
+        const fusionResponse = await fetch('fusion-data.json');
+        const fusionData = await fusionResponse.json();
+        const ratesResponse = await fetch('rates.json');
+        defaultRates = await ratesResponse.json();
+        shards = Object.entries(fusionData.shards).map(([key, shard]) => ({ key, ...shard }));
         shardNameToKey = shards.reduce((acc, shard) => {
             acc[shard.name.toLowerCase()] = shard.key;
             return acc;
         }, {});
+        renderRatesList();
     }
 
-    loadShards();
+    loadData();
+
+    function renderRatesList(filter = '') {
+        const savedRates = JSON.parse(localStorage.getItem('customRates') || '{}');
+        ratesList.innerHTML = '';
+        const filteredShards = filter
+            ? shards.filter(shard => shard.name.toLowerCase().includes(filter.toLowerCase()))
+            : shards;
+        filteredShards.forEach(shard => {
+            const rateItem = document.createElement('div');
+            rateItem.className = 'rate-item';
+            rateItem.innerHTML = `
+                    <label>${shard.name}</label>
+                    <input type="number" class="rate-input" data-shard="${shard.key}" value="${savedRates[shard.key] || defaultRates[shard.key] || 0}" min="0" step="0.01">
+                `;
+            ratesList.appendChild(rateItem);
+        });
+        updateRates();
+    }
+
+    function updateRates() {
+        const inputs = ratesList.querySelectorAll('.rate-input');
+        const customRates = {};
+        inputs.forEach(input => {
+            customRates[input.dataset.shard] = parseFloat(input.value) || 0;
+        });
+        localStorage.setItem('customRates', JSON.stringify(customRates));
+    }
+
+    rateFilterInput.addEventListener('input', function() {
+        renderRatesList(this.value);
+    });
 
     shardInput.addEventListener('input', function() {
         const val = this.value.toLowerCase();
@@ -198,13 +364,13 @@
             matches.forEach((shard, index) => {
                 const item = document.createElement('div');
                 item.textContent = shard.name;
+                item.setAttribute('data-index', index);
                 item.addEventListener('click', function() {
                     shardInput.value = shard.name;
                     closeAllLists();
                     autocompleteList.classList.remove('visible');
-                    triggerSearch(); // Trigger search on click
+                    triggerSearch();
                 });
-                item.setAttribute('data-index', index);
                 autocompleteList.appendChild(item);
             });
         } else {
@@ -221,7 +387,7 @@
             currentFocus = (currentFocus + 1) % items.length;
             updateHighlight(items);
         } else if (e.key === 'ArrowUp') {
-            e.preventDefault(); // Prevent cursor movement
+            e.preventDefault();
             currentFocus = (currentFocus - 1 + items.length) % items.length;
             updateHighlight(items);
         } else if (e.key === 'Enter' && currentFocus > -1) {
@@ -230,7 +396,7 @@
             shardInput.value = selectedItem.textContent;
             closeAllLists();
             autocompleteList.classList.remove('visible');
-            // triggerSearch();
+            triggerSearch();
         }
     });
 
@@ -255,9 +421,11 @@
         const shardName = shardInput.value.toLowerCase();
         const quantity = parseInt(quantityInput.value) || 1;
         const shardKey = shardNameToKey[shardName];
+        const hunterFortune = parseFloat(hunterFortuneInput.value) || 0;
+        const excludeChameleon = chameleonToggle.checked;
         if (shardKey) {
             output.innerHTML = 'Loading...';
-            getRecipeTree(shardKey, quantity).then(html => {
+            getRecipeTree(shardKey, quantity, hunterFortune, excludeChameleon).then(html => {
                 output.innerHTML = html;
                 toggleAllButton.textContent = 'Collapse All';
                 allExpanded = true;
@@ -269,6 +437,30 @@
     }
 
     searchButton.addEventListener('click', triggerSearch);
+
+    togglePanelButton.addEventListener('click', () => {
+        sidePanel.classList.toggle('open');
+        togglePanelButton.textContent = sidePanel.classList.contains('open') ? 'Close Rates' : 'Edit Rates';
+    });
+
+    closePanelButton.addEventListener('click', () => {
+        sidePanel.classList.remove('open');
+        togglePanelButton.textContent = 'Edit Rates';
+    });
+
+    ratesList.addEventListener('input', (event) => {
+        if (event.target.classList.contains('rate-input')) {
+            updateRates();
+        }
+    });
+
+    resetRatesButton.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to reset all rates to their defaults? This will clear all custom rates.')) {
+            localStorage.removeItem('customRates');
+            resetRates();
+            await loadData();
+        }
+    });
 
     let detailsStates = new Map();
 
