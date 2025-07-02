@@ -38,7 +38,7 @@
             position: relative;
         }
 
-        #shard-input, #quantity-input, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input {
+        #shard-input, #quantity-input, #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input {
             padding: 10px;
             border: none;
             border-radius: 5px;
@@ -63,10 +63,10 @@
         }
 
         #quantity-input {
-            width: 100px;
+            width: 80px;
         }
 
-        #quantity-input::-webkit-outer-spin-button, #quantity-input::-webkit-inner-spin-button {
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
@@ -75,7 +75,7 @@
             -moz-appearance:textfield; /* Firefox */
         }
 
-        #search-button, #toggle-all-button, #toggle-panel-button, #close-panel-button {
+        #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, #close-panel-button {
             cursor: pointer;
         }
 
@@ -268,7 +268,6 @@
             <input type="text" id="shard-input" placeholder="Search for a shard..." autocomplete="off">
             <div id="autocomplete-list" class="autocomplete-items"></div>
             <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
-            <button id="search-button">Search</button>
             <button id="toggle-all-button">Collapse All</button>
             <button id="toggle-panel-button">Edit Rates</button>
         </div>
@@ -287,19 +286,19 @@
             </div>
             <div>
                 <label for="newt-input">Newt lvl</label>
-                <input type="number" id="newt-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+                <input type="number" id="newt-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
             </div>
             <div>
                 <label for="salamander-input">Salamander lvl</label>
-                <input type="number" id="salamander-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+                <input type="number" id="salamander-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
             </div>
             <div>
                 <label for="lizard-king-input">Lizard King lvl</label>
-                <input type="number" id="lizard-king-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+                <input type="number" id="lizard-king-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
             </div>
             <div>
                 <label for="leviathan-input">Leviathan lvl</label>
-                <input type="number" id="leviathan-input" placeholder="0" min="0" max="10" value="0" style="width: 50px;">
+                <input type="number" id="leviathan-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
             </div>
         </div>
         <div id="output">Enter a shard and quantity to see the crafting tree.</div>
@@ -309,7 +308,7 @@
         <h2>Edit Shard Rates</h2>
         <h4>These are rates without hunter fortune and in shards per hour</h4>
         <input type="text" id="rate-filter-input" placeholder="Filter shards..." autocomplete="off">
-        <button id="reset-rates-button">Reset to Defaults</button>
+        <button id="reset-rates-button">Reset to Defaults</button><br>
         <div id="rates-list"></div>
     </div>
 </div>
@@ -319,7 +318,6 @@
     const shardInput = document.getElementById('shard-input');
     const autocompleteList = document.getElementById('autocomplete-list');
     const quantityInput = document.getElementById('quantity-input');
-    const searchButton = document.getElementById('search-button');
     const toggleAllButton = document.getElementById('toggle-all-button');
     const togglePanelButton = document.getElementById('toggle-panel-button');
     const sidePanel = document.getElementById('side-panel');
@@ -382,6 +380,22 @@
         });
     }
 
+    function setMaxQuantity() {
+        const shardName = shardInput.value.toLowerCase();
+        const shardKey = shardNameToKey[shardName];
+        if (shardKey) {
+            const rarity = shards.find(shard => shard.key === shardKey).rarity;
+            const maxQuantities = {
+                common: 96,
+                uncommon: 64,
+                rare: 48,
+                epic: 32,
+                legendary: 24
+            };
+            quantityInput.value = maxQuantities[rarity] || 1;
+        }
+    }
+
     rateFilterInput.addEventListener('input', function() {
         renderRatesList(this.value);
     });
@@ -405,6 +419,7 @@
                     shardInput.value = shard.name;
                     closeAllLists();
                     autocompleteList.classList.remove('visible');
+                    setMaxQuantity();
                     triggerSearch();
                 });
                 autocompleteList.appendChild(item);
@@ -432,6 +447,7 @@
             shardInput.value = selectedItem.textContent;
             closeAllLists();
             autocompleteList.classList.remove('visible');
+            setMaxQuantity();
             triggerSearch();
         } else if (e.key === 'Enter' && currentFocus === -1) {
             e.preventDefault();
@@ -440,6 +456,7 @@
             shardInput.value = selectedItem.textContent;
             closeAllLists();
             autocompleteList.classList.remove('visible');
+            setMaxQuantity();
             triggerSearch();
         }
     });
@@ -494,8 +511,6 @@
             output.innerHTML = 'Shard not found.';
         }
     }
-
-    searchButton.addEventListener('click', triggerSearch);
 
     togglePanelButton.addEventListener('click', () => {
         sidePanel.classList.toggle('open');
