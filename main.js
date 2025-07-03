@@ -142,7 +142,8 @@ function computeMinCosts(data) {
                 const fuse2 = data.shards[input2].fuse_amount;
                 const costInput1 = minCosts.get(input1) * fuse1;
                 const costInput2 = minCosts.get(input2) * fuse2;
-                const totalCost = costInput1 + costInput2;
+                const craftPenalty = 0.8 / 3600;
+                const totalCost = costInput1 + costInput2 + craftPenalty;
                 const costPerUnit = totalCost / recipe.outputQuantity;
                 if (costPerUnit < minCosts.get(outputShard)) {
                     minCosts.set(outputShard, costPerUnit);
@@ -167,19 +168,20 @@ function buildRecipeTree(shard, choices) {
         return { shard, method: 'recipe', recipe, inputs: [tree1, tree2], quantity: 0 };
     }
 }
-function assignQuantities(tree, requiredQuantity, data) {
+function assignQuantities(tree, requiredQuantity, data, craftCounter) {
     tree.quantity = requiredQuantity;
     if (tree.method === 'recipe') {
         const recipe = tree.recipe;
         const outputQuantity = recipe.outputQuantity;
         const craftsNeeded = Math.ceil(requiredQuantity / outputQuantity);
+        craftCounter.total += craftsNeeded; // <-- Add this line
         const [input1, input2] = recipe.inputs;
         const fuse1 = data.shards[input1].fuse_amount;
         const fuse2 = data.shards[input2].fuse_amount;
         const input1Quantity = craftsNeeded * fuse1;
         const input2Quantity = craftsNeeded * fuse2;
-        assignQuantities(tree.inputs[0], input1Quantity, data);
-        assignQuantities(tree.inputs[1], input2Quantity, data);
+        assignQuantities(tree.inputs[0], input1Quantity, data, craftCounter);
+        assignQuantities(tree.inputs[1], input2Quantity, data, craftCounter);
     }
 }
 function collectTotalQuantities(tree) {
@@ -243,7 +245,8 @@ async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterF
         }
         const { minCosts, choices } = computeMinCosts(data);
         const tree = buildRecipeTree(targetShard, choices);
-        assignQuantities(tree, requiredQuantity, data);
+        const craftCounter = { total: 0 };
+        assignQuantities(tree, requiredQuantity, data, craftCounter);
         const totalQuantities = collectTotalQuantities(tree);
         let totalShardsProduced = requiredQuantity;
         let craftsNeeded = 1;
@@ -260,6 +263,7 @@ async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterF
 <ul>
 ${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${qty}x ${data.shards[shardId].name} at ${data.shards[shardId].rate.toFixed(2).replace(/\.00$/, '')}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
 </ul>
+${craftCounter.total}x total fusions needed. Taking ${decimalHoursToHoursMinutes(craftCounter.total * 0.8 / 3600)}<br>
 <h2>Fusion Tree:</h2>
 `;
         let treeHtml = displayTree(tree, data, true, totalShardsProduced);
