@@ -40,7 +40,15 @@
             width: 100%;
         }
 
-        #shard-input, #quantity-input, #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, .rate-input, #rate-filter-input, #kuudra-select, #money-input {
+        #shard-input,
+        #quantity-input,
+        #max-stats,
+        #toggle-all-button,
+        #toggle-panel-button,
+        .rate-input,
+        #rate-filter-input,
+        #kuudra-select,
+        #money-input {
             padding: 10px;
             border: none;
             border-radius: 5px;
@@ -81,7 +89,7 @@
             -moz-appearance:textfield; /* Firefox */
         }
 
-        #max-quantity, #search-button, #toggle-all-button, #toggle-panel-button, #close-panel-button {
+        #max-stats, #toggle-all-button, #toggle-panel-button, #close-panel-button {
             cursor: pointer;
         }
 
@@ -246,16 +254,16 @@
             gap: 5px;
         }
 
-        #hunter-fortune, #newt-input, #salamander-input, #lizard-king-input, #leviathan-input {
+        #hunter-fortune, #newt-input, #salamander-input, #lizard-king-input, #leviathan-input, #python-input, #king-cobra-input, #sea-serpent-input, #tiamat-input {
             padding: 8px;
             border: none;
             border-radius: 5px;
             background-color: #333;
             color: #e0e0e0;
-            width: 80px;
+            width: 60px;
         }
 
-        #chameleon-toggle, #frog-toggle {
+        #chameleon-toggle, #frog-toggle, #wooden-bait-toggle {
             width: 18px;
             height: 18px;
             accent-color: #555;
@@ -282,6 +290,7 @@
                 <input type="number" id="quantity-input" placeholder="Quantity" min="1" value="1">
             </div>
             <div class="right-group">
+                <button id="max-stats">Max Stats</button>
                 <button id="toggle-all-button">Collapse All</button>
                 <button id="toggle-panel-button">Edit Rates</button>
             </div>
@@ -289,11 +298,11 @@
         <div id="options">
             <div class="options-row">
                 <div>
-                    <label for="hunter-fortune">Hunter Fortune (%):</label>
+                    <label for="hunter-fortune">Hunter Fortune</label>
                     <input type="number" id="hunter-fortune" min="0" value="0">
                 </div>
                 <div>
-                    <label for="chameleon-toggle">Exclude Chameleon:</label>
+                    <label for="chameleon-toggle">Exclude Chameleon</label>
                     <input type="checkbox" id="chameleon-toggle">
                 </div>
                 <div>
@@ -304,27 +313,141 @@
             <div class="options-row">
                 <div>
                     <label for="newt-input">Newt lvl</label>
-                    <input type="number" id="newt-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                    <select id="newt-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
                 </div>
                 <div>
                     <label for="salamander-input">Salamander lvl</label>
-                    <input type="number" id="salamander-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                    <select id="salamander-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
                 </div>
                 <div>
                     <label for="lizard-king-input">Lizard King lvl</label>
-                    <input type="number" id="lizard-king-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                    <select id="lizard-king-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
                 </div>
                 <div>
                     <label for="leviathan-input">Leviathan lvl</label>
-                    <input type="number" id="leviathan-input" placeholder="0" min="0" max="10" value="0" style="width: 30px;">
+                    <select id="leviathan-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
                 </div>
             </div>
             <div class="options-row">
                 <div>
-                    <label style="font-weight:bold">For Kraken Shards:</label>
+                    <label for="python-input">Python lvl</label>
+                    <select id="python-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
                 </div>
                 <div>
-                    <label for="kuudra-select">Kuudra Tier:</label>
+                    <label for="king-cobra-input">King Cobra lvl</label>
+                    <select id="king-cobra-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sea-serpent-input">Sea Serpent lvl</label>
+                    <select id="sea-serpent-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="tiamat-input">Tiamat lvl</label>
+                    <select id="tiamat-input">
+                        <option value="10">10</option>
+                        <option value="9">9</option>
+                        <option value="8">8</option>
+                        <option value="7">7</option>
+                        <option value="6">6</option>
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    </select>
+                </div>
+            </div>
+            <div class="options-row">
+                <div>
+                    <label style="font-weight:bold">For Kraken Shards</label>
+                </div>
+                <div>
+                    <label for="kuudra-select">Kuudra Tier</label>
                     <select id="kuudra-select">
                         <option value="none">No Kuudra</option>
                         <option value="t1">T1</option>
@@ -335,9 +458,15 @@
                     </select>
                 </div>
                 <div>
-                    <label for="money-input">Coins/hour:</label>
+                    <label for="money-input">Coins/hour</label>
                     <input type="number" id="money-input" placeholder="40000000" min="1" value="">
                     <label for="money-input">Empty to ignore key cost</label>
+                </div>
+            </div>
+            <div class="options-row">
+                <div>
+                    <label for="wooden-bait-toggle">No Wooden Bait</label>
+                    <input type="checkbox" id="wooden-bait-toggle">
                 </div>
             </div>
         </div>
@@ -358,6 +487,7 @@
     const shardInput = document.getElementById('shard-input');
     const autocompleteList = document.getElementById('autocomplete-list');
     const quantityInput = document.getElementById('quantity-input');
+    const maxStatsButton = document.getElementById('max-stats');
     const toggleAllButton = document.getElementById('toggle-all-button');
     const togglePanelButton = document.getElementById('toggle-panel-button');
     const sidePanel = document.getElementById('side-panel');
@@ -372,8 +502,13 @@
     const salamanderInput = document.getElementById('salamander-input');
     const lizardKingInput = document.getElementById('lizard-king-input');
     const leviathanInput = document.getElementById('leviathan-input');
+    const pythonInput = document.getElementById('python-input');
+    const kingCobraInput = document.getElementById('king-cobra-input');
+    const seaSerpentInput = document.getElementById('sea-serpent-input');
+    const tiamatInput = document.getElementById('tiamat-input');
     const kuudraSelect = document.getElementById('kuudra-select');
     const moneyInput = document.getElementById('money-input');
+    const woodenBaitToggle = document.getElementById('wooden-bait-toggle');
     const output = document.getElementById('output');
 
     let shards = [];
@@ -437,6 +572,19 @@
             quantityInput.value = maxQuantities[rarity] || 1;
         }
     }
+
+    maxStatsButton.addEventListener('click', () => {
+        hunterFortuneInput.value = '121';
+        newtInput.value = '10';
+        salamanderInput.value = '10';
+        lizardKingInput.value = '10';
+        leviathanInput.value = '10';
+        pythonInput.value = '10';
+        kingCobraInput.value = '10';
+        seaSerpentInput.value = '10';
+        tiamatInput.value = '10';
+        triggerSearch();
+    })
 
     rateFilterInput.addEventListener('input', function() {
         renderRatesList(this.value);
@@ -538,8 +686,13 @@
         const salamanderLevel = parseInt(salamanderInput.value) || 0;
         const lizardKingLevel = parseInt(lizardKingInput.value) || 0;
         const leviathanLevel = parseInt(leviathanInput.value) || 0;
+        const pythonLevel = parseInt(pythonInput.value) || 0;
+        const kingCobraLevel = parseInt(kingCobraInput.value) || 0;
+        const seaSerpentLevel = parseInt(seaSerpentInput.value) || 0;
+        const tiamatLevel = parseInt(tiamatInput.value) || 0;
         const kuudraTier = kuudraSelect.value;
         const moneyPerHour = parseInt(moneyInput.value) || 0;
+        const woodenBait = woodenBaitToggle.checked;
         if (shardKey) {
             output.innerHTML = 'Loading...';
             getRecipeTree(shardKey,
@@ -552,8 +705,13 @@
                 salamanderLevel,
                 lizardKingLevel,
                 leviathanLevel,
+                pythonLevel,
+                kingCobraLevel,
+                seaSerpentLevel,
+                tiamatLevel,
                 kuudraTier,
-                moneyPerHour
+                moneyPerHour,
+                woodenBait
             ).then(html => {
                 output.innerHTML = html;
                 toggleAllButton.textContent = 'Collapse All';
@@ -638,6 +796,38 @@
         leviathanInput.select();
     });
 
+    pythonInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    pythonInput.addEventListener('focus', () => {
+        pythonInput.select();
+    });
+
+    kingCobraInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    kingCobraInput.addEventListener('focus', () => {
+        kingCobraInput.select();
+    });
+
+    seaSerpentInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    seaSerpentInput.addEventListener('focus', () => {
+        seaSerpentInput.select();
+    });
+
+    tiamatInput.addEventListener('input', () => {
+        triggerSearch();
+    });
+
+    tiamatInput.addEventListener('focus', () => {
+        tiamatInput.select();
+    });
+
     kuudraSelect.addEventListener('change', () => {
         triggerSearch();
     });
@@ -648,6 +838,10 @@
 
     moneyInput.addEventListener('focus', () => {
         moneyInput.select();
+    });
+
+    woodenBaitToggle.addEventListener('change', () => {
+        triggerSearch();
     });
 
     let detailsStates = new Map();

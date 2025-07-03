@@ -1,5 +1,39 @@
 const noFortuneShards = ["C19", "U4", "U16", "U28", "R25", "L4", "L15"];
-async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, kuudraTier, moneyPerHour) {
+const woodenBaitShards = ["R29", "L23", "R59"];
+const blackHoleShard = {
+    "L26": false,
+    "E33": true,
+    "E20": false,
+    "E17": false,
+    "E14": false,
+    "R56": false,
+    "R49": false,
+    "R39": true,
+    "R36": true,
+    "R31": true,
+    "R21": false,
+    "R18": false,
+    "R6": true,
+    "U38": true,
+    "U36": true,
+    "U33": true,
+    "U32": true,
+    "U30": false,
+    "U29": false,
+    "U27": false,
+    "U18": true,
+    "U15": true,
+    "U12": true,
+    "C36": true,
+    "C33": true,
+    "C30": true,
+    "C27": false,
+    "C21": true,
+    "C15": true,
+    "C12": true,
+    "C9": true
+};
+async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, pythonLevel, kingCobraLevel, seaSerpentLevel, tiamatLevel, kuudraTier, moneyPerHour, noWoodenBait) {
     try {
         const fusionResponse = await fetch('fusion-data.json');
         const fusionJson = await fusionResponse.json();
@@ -38,14 +72,17 @@ async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, 
                 else if (kuudraTier === 'none') {
                     rate = 0;
                 }
-                console.log(rate);
             }
             if (rate > 0) {
+                if (noWoodenBait && woodenBaitShards.includes(shardId)) {
+                    rate *= 0.05;
+                }
                 if (!noFortuneShards.includes(shardId)) {
                     let effectiveFortune = hunterFortune;
-                    if (frogPet) {
-                        rate *= 1.1;
-                    }
+                    let tiamatMultiplier = 1 + ((5 * tiamatLevel) / 100);
+                    let seaSerpentMultiplier = 1 + (((2 * seaSerpentLevel) / 100) * tiamatMultiplier);
+                    let pythonMultiplier = ((2 * pythonLevel) / 100) * seaSerpentMultiplier;
+                    let kingCobraMultiplier = (kingCobraLevel / 100) * seaSerpentMultiplier;
                     if (fusionJson.shards[shardId].rarity === 'common') {
                         effectiveFortune += 2 * newtLevel;
                     }
@@ -57,6 +94,15 @@ async function parseData(customRates, hunterFortune, excludeChameleon, frogPet, 
                     }
                     else if (fusionJson.shards[shardId].rarity === 'epic') {
                         effectiveFortune += leviathanLevel;
+                    }
+                    if (frogPet) {
+                        rate *= 1.1;
+                    }
+                    if (shardId in blackHoleShard) {
+                        if (blackHoleShard[shardId]) {
+                            rate *= 1 + pythonMultiplier;
+                        }
+                        effectiveFortune *= 1 + kingCobraMultiplier;
                     }
                     rate *= (1 + (effectiveFortune / 100));
                 }
@@ -189,9 +235,9 @@ function displayTree(tree, data, isTopLevel = false, totalShardsProduced = tree.
     }
 }
 let data;
-async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, kuudraTier, moneyPerHour) {
+async function getRecipeTree(targetShard, requiredQuantity, customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, pythonLevel, kingCobraLevel, seaSerpentLevel, tiamatLevel, kuudraTier, moneyPerHour, noWoodenBait) {
     try {
-        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, kuudraTier, moneyPerHour);
+        data = await parseData(customRates, hunterFortune, excludeChameleon, frogPet, newtLevel, salamanderLevel, lizardKingLevel, leviathanLevel, pythonLevel, kingCobraLevel, seaSerpentLevel, tiamatLevel, kuudraTier, moneyPerHour, noWoodenBait);
         if (!data.shards[targetShard]) {
             throw new Error(`Shard ${targetShard} not found in the data.`);
         }
