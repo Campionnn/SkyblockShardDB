@@ -271,11 +271,11 @@ function shardDetails(shard: Shard): string {
 function decimalHoursToHoursMinutes(decimalHours: number): string {
     const hours = Math.floor(decimalHours);
     const minutes = Math.round((decimalHours - hours) * 60);
-    if (minutes === 0 || isNaN(minutes)) {
-        return `${hours} hours`;
-    }
     if (hours === 0) {
         return `${minutes} minutes`;
+    }
+    if (minutes === 0 || isNaN(minutes)) {
+        return `${hours} hours`;
     }
     return `${hours} hours ${minutes} minutes`;
 }
@@ -362,6 +362,12 @@ async function getRecipeTree(targetShard: string,
             totalShardsProduced = craftsNeeded * outputQuantity;
         }
 
+        let totalFusions = `${craftCounter.total}x total fusions`
+        const craftTime = craftCounter.total * 0.8 / 3600
+        if (craftTime > (1/12)) {
+            totalFusions += ` taking ${decimalHoursToHoursMinutes(craftTime)}`;
+        }
+
         const totalMaterialsHtml = `
 <h3>Time per shard for ${data.shards[targetShard].name}: ${decimalHoursToHoursMinutes(minCosts.get(targetShard) ?? 0)}</h3>
 <h3>Total time for ${totalShardsProduced} ${data.shards[targetShard].name} (${craftsNeeded} craft${craftsNeeded > 1 ? 's' : ''}): ${decimalHoursToHoursMinutes((minCosts.get(targetShard) ?? 0) * totalShardsProduced)}</h3>
@@ -369,7 +375,7 @@ async function getRecipeTree(targetShard: string,
 <ul>
 ${Array.from(totalQuantities).map(([shardId, qty]) => `<li>${qty}x ${data.shards[shardId].name} at ${data.shards[shardId].rate.toFixed(2).replace(/\.00$/, '')}/hour = ${decimalHoursToHoursMinutes(qty / data.shards[shardId].rate)}</li>`).join('')}
 </ul>
-${craftCounter.total}x total fusions needed. Taking ${decimalHoursToHoursMinutes(craftCounter.total * 0.8 / 3600)}<br>
+${totalFusions}<br>
 <h2>Fusion Tree:</h2>
 `;
 
